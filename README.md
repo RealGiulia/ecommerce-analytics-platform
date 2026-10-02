@@ -154,6 +154,8 @@ uv run pytest
 
 ### What this project solves
 
+![Data Visualization 1](dash-2.png)
+![Data Visualization 2](dash-1.png)
 If you have sales, product or customer data scattered across an API, a
 spreadsheet or a legacy system, and want to make decisions on top of it
 without depending on someone running a query every time, this is what I

@@ -19,8 +19,12 @@ CREATE TABLE IF NOT EXISTS analytics.fact_orders (
 
     loaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
+    -- Includes order_date_key (not just order_id/order_item_id) so a backfill
+    -- for a *different* date adds new rows instead of colliding with -- and
+    -- silently overwriting -- whichever date the row was first loaded with.
+    -- Re-running the same date stays idempotent (see etl/load/fact_loader.py).
     CONSTRAINT uq_fact_order_item
-        UNIQUE (order_id, order_item_id),
+        UNIQUE (order_id, order_item_id, order_date_key),
 
     CONSTRAINT fk_fact_customer
         FOREIGN KEY (customer_key)

@@ -5,6 +5,14 @@ DummyJSON carts carry no order timestamp, so the pipeline's own ingestion
 date stands in for ``order_date`` -- a deliberate, documented stand-in
 rather than a fabricated business date. Likewise there is no order status
 on the source, so every row is recorded as ``completed``.
+
+The upsert's natural key is ``(order_id, order_item_id, order_date_key)``,
+not just ``(order_id, order_item_id)``: DummyJSON always returns the same
+cart/product IDs, so keying on the pair alone would make every backfill run
+for a *different* date collide with -- and silently overwrite -- whichever
+date the row was first loaded with. Including the date makes re-running the
+same ``--date`` idempotent while letting different dates accumulate as
+separate rows, which is what makes day-over-day history possible at all.
 """
 
 from __future__ import annotations
@@ -45,7 +53,7 @@ _UPSERT_FACT_SQL = text(
         ON dc.customer_id = c.user_id::text AND dc.is_current = TRUE
     JOIN analytics.dim_product dp
         ON dp.product_id = ci.product_id::text
-    ON CONFLICT (order_id, order_item_id) DO UPDATE SET
+    ON CONFLICT (order_id, order_item_id, order_date_key) DO UPDATE SET
         quantity = EXCLUDED.quantity,
         unit_price = EXCLUDED.unit_price,
         discount_amount = EXCLUDED.discount_amount,
